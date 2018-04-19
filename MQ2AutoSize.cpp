@@ -612,24 +612,6 @@ void AutoSizeCmd(PSPAWNINFO pLPlayer, char* szLine)
    }
 }
 
-// credit: radioactiveman/bunny771 ----------------------------------------
-bool bDataCompare(const unsigned char* pucData, const unsigned char* pucMask, const char* szMask)
-{
-   for (; *szMask; ++szMask, ++pucData, ++pucMask)
-   if (*szMask == 'x' && *pucData != *pucMask)
-      return false;
-   return (*szMask) == NULL;
-}
-
-unsigned long ulFindPattern(unsigned long ulAddress, unsigned long ulLen, unsigned char* pucMask, char* szMask)
-{
-   for (unsigned long i = 0; i < ulLen; i++)
-   if (bDataCompare((unsigned char*)(ulAddress + i), pucMask, szMask))
-      return (unsigned long)(ulAddress + i);
-   return 0;
-}
-// ------------------------------------------------------------------------
-
 PLUGIN_API void InitializePlugin()
 {
    addrChangeHeight = PlayerZoneClient__ChangeHeight;
