@@ -63,7 +63,6 @@ const float MIN_SIZE = 1.0f;
 const float MAX_SIZE = 250.0f;
 
 // used by the plugin
-#define _FindPattern FindPattern
 const float OTHER_SIZE = 1.0f;
 const float ZERO_SIZE = 0.0f;
 unsigned int uiSkipPulse = 0;
@@ -626,7 +625,7 @@ void AutoSizeCmd(PSPAWNINFO pLPlayer, char* szLine)
 
 PLUGIN_API void InitializePlugin()
 {
-   addrChangeHeight = _FindPattern(*(DWORD*)__heqmain, 0x100000, patternChangeHeight, maskChangeHeight);
+   addrChangeHeight = FindPattern(*(DWORD*)__heqmain, 0x100000, patternChangeHeight, maskChangeHeight);
 
    if (addrChangeHeight)
    {
