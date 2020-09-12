@@ -1,7 +1,5 @@
 // MQ2AutoSize.cpp : Resize spawns by distance or whole zone (client only)
 //
-//	09/09/2020: finds its own offset again and pattern updated - dencelle
-//
 // 06/09/2009: Fixed for changes to the eqgame function
 //             added corpse option and autosave -pms
 // 02/09/2009: added parameters, merc, npc & everything spawn options,
@@ -69,7 +67,6 @@ unsigned int uiSkipPulse = 0;
 char szTemp[MAX_STRING] = { 0 };
 void ResizeAll();
 
-
 // our configuration
 class COurSizes
 {
@@ -110,16 +107,8 @@ COurSizes AS_Config;
 
 // offset pattern
 unsigned long addrChangeHeight = NULL;
-
-#if defined(ROF2EMU) || defined(UFEMU)
-PBYTE patternChangeHeight = (PBYTE)"\xD9\x44\x24\x0C\x56\xD9\x44\x24\x0C";
-char maskChangeHeight[] = "xxxxxxxxx";
-#else
-//Sept 8 2020 Test
-//E8 ? ? ? ? EB 07 DD D8
-PBYTE patternChangeHeight = (PBYTE)"\xE8\x00\x00\x00\x00\xEB\x07\xDD\xD8";
-char maskChangeHeight[] = "x????xxxx";
-#endif
+PBYTE patternChangeHeight = (PBYTE)"\xD9\x44\x24\x0C\x56\xD9\x44\x24\x0C\x8B\xF1";
+char maskChangeHeight[] = "xxxxxxx?xxx";
 
 // class to access the ChangeHeight function
 class CSizeClass
@@ -625,7 +614,7 @@ void AutoSizeCmd(PSPAWNINFO pLPlayer, char* szLine)
 
 PLUGIN_API void InitializePlugin()
 {
-   addrChangeHeight = FindPattern(*(DWORD*)__heqmain, 0x100000, patternChangeHeight, maskChangeHeight);
+   addrChangeHeight = PlayerZoneClient__ChangeHeight;
 
    if (addrChangeHeight)
    {
