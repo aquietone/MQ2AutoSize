@@ -50,7 +50,8 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include "../MQ2Plugin.h"
+#include <mq/Plugin.h>
+
 const char* MODULE_NAME = "MQ2AutoSize";
 PreSetup(MODULE_NAME);
 PLUGIN_VERSION(1.0);
