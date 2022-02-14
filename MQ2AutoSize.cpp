@@ -106,30 +106,30 @@ public:
 };
 COurSizes AS_Config;
 
-// offset pattern
-unsigned long addrChangeHeight = NULL;
-PBYTE patternChangeHeight = (PBYTE)"\xD9\x44\x24\x0C\x56\xD9\x44\x24\x0C\x8B\xF1";
-char maskChangeHeight[] = "xxxxxxx?xxx";
-
 // class to access the ChangeHeight function
-class CSizeClass
+class PlayerZoneClient_Hook
 {
 public:
-	void SizeFunc_Tramp(float, float, int, int);
+	DETOUR_TRAMPOLINE_DEF(void, ChangeHeight_Trampoline, (float, float, float, bool))
+	void ChangeHeight_Detour(float newHeight, float cameraPos, float speedScale, bool unused)
+	{
+		ChangeHeight_Trampoline(newHeight, cameraPos, speedScale, unused);
+	}
 
 	// this assures valid function call
-	void ResizeWrapper(PSPAWNINFO pSpawn, float fNewSize)
+	void ChangeHeight_Wrapper(float fNewSize)
 	{
 		float fView = OTHER_SIZE;
-		int	iNotUsed = NULL;
-		if (pSpawn->SpawnID == ((PSPAWNINFO)pLocalPlayer)->SpawnID || pSpawn->SpawnID == ((PSPAWNINFO)pCharSpawn)->SpawnID)
+		PlayerClient* pSpawn = reinterpret_cast<PlayerClient*>(this);
+
+		if (pSpawn->SpawnID == pLocalPlayer->SpawnID)
 		{
 			fView = ZERO_SIZE;
 		}
-		SizeFunc_Tramp(fNewSize, fView, iNotUsed, iNotUsed);
+
+		ChangeHeight_Trampoline(fNewSize, fView, 1.0f, false);
 	};
 };
-FUNCTION_AT_ADDRESS(void CSizeClass::SizeFunc_Tramp(float, float, int, int), addrChangeHeight);
 
 float SaneSize(float fValidate)
 {
@@ -215,10 +215,12 @@ void SaveINI()
 	WritePrivateProfileString("Config", "SizeSelf", SafeItoa((int)AS_Config.SizeSelf, szTemp, 10), INIFileName);
 }
 
-void ChangeSize(PSPAWNINFO pChangeSpawn, float fNewSize)
+void ChangeSize(PlayerClient* pChangeSpawn, float fNewSize)
 {
-	if (GetGameState() != GAMESTATE_INGAME || !pChangeSpawn || !pChangeSpawn->SpawnID) return;
-	((CSizeClass*)pChangeSpawn)->ResizeWrapper(pChangeSpawn, fNewSize);
+	if (pChangeSpawn)
+	{
+		reinterpret_cast<PlayerZoneClient_Hook*>(pChangeSpawn)->ChangeHeight_Wrapper(fNewSize);
+	}
 }
 
 void SizePasser(PSPAWNINFO pSpawn, bool bReset)
@@ -608,26 +610,18 @@ void AutoSizeCmd(PSPAWNINFO pLPlayer, char* szLine)
 
 PLUGIN_API void InitializePlugin()
 {
-	addrChangeHeight = PlayerZoneClient__ChangeHeight;
+	EzDetour(PlayerZoneClient__ChangeHeight, &PlayerZoneClient_Hook::ChangeHeight_Detour, &PlayerZoneClient_Hook::ChangeHeight_Trampoline);
 
-	if (addrChangeHeight)
-	{
-		AddCommand("/autosize", AutoSizeCmd);
-		LoadINI();
-	}
-	else
-	{
-		WriteChatf("\ay%s\aw:: \arError:\ax Couldn't find offset. Unloading.", MODULE_NAME);
-		EzCommand("/timed 1 /plugin mq2autosize unload");
-	}
+	AddCommand("/autosize", AutoSizeCmd);
+	LoadINI();
 }
 
 PLUGIN_API void ShutdownPlugin()
 {
-	if (addrChangeHeight)
-	{
-		RemoveCommand("/autosize");
-		SpawnListResize(true);
-		SaveINI();
-	}
+	RemoveDetour(PlayerZoneClient__ChangeHeight);
+
+	RemoveCommand("/autosize");
+	SpawnListResize(true);
+	SaveINI();
+
 }
